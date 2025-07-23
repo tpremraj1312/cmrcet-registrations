@@ -1,0 +1,27 @@
+# ===========================
+# Frontend (React)
+# ===========================
+frontend/node_modules/
+frontend/.env
+frontend/build/
+frontend/dist/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# ===========================
+# Backend (Node/Express)
+# ===========================
+backend/node_modules/
+backend/.env
+backend/dist/
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+
+# ===========================
+# System/Editor Files
+# ===========================
+.DS_Store
+Thumbs.db
+.vscode/
