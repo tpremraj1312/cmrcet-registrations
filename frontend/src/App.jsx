@@ -284,7 +284,7 @@ function App() {
             <summary className="text-lg font-semibold text-indigo-800 cursor-pointer">Entrance Exam Details</summary>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">IIT JEE Main 2024 Rank</label>
+                <label className="block text-sm font-medium text-gray-700">IIT JEE Main 2025 Rank</label>
                 <input
                   type="number"
                   value={formData.jeeRank}
@@ -295,7 +295,7 @@ function App() {
                 {errors.jeeRank && <p className="text-red-500 text-xs mt-1">{errors.jeeRank}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">TG EAPCET-2024 Rank</label>
+                <label className="block text-sm font-medium text-gray-700">TG EAPCET-2025 Rank</label>
                 <input
                   type="number"
                   value={formData.eapcetRank}
@@ -306,7 +306,7 @@ function App() {
                 {errors.eapcetRank && <p className="text-red-500 text-xs mt-1">{errors.eapcetRank}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">EAPCET-2024 Hall Ticket</label>
+                <label className="block text-sm font-medium text-gray-700">EAPCET-2025 Hall Ticket</label>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
@@ -316,7 +316,7 @@ function App() {
                 {errors.eapcetHallTicket && <p className="text-red-500 text-xs mt-1">{errors.eapcetHallTicket}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">EAPCET-2024 Rank Card</label>
+                <label className="block text-sm font-medium text-gray-700">EAPCET-2025 Rank Card</label>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
@@ -326,7 +326,7 @@ function App() {
                 {errors.eapcetRankCard && <p className="text-red-500 text-xs mt-1">{errors.eapcetRankCard}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">JEE-2024 Hall Ticket</label>
+                <label className="block text-sm font-medium text-gray-700">JEE-2025 Hall Ticket</label>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
@@ -336,7 +336,7 @@ function App() {
                 {errors.jeeHallTicket && <p className="text-red-500 text-xs mt-1">{errors.jeeHallTicket}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">JEE-2024 Rank Card</label>
+                <label className="block text-sm font-medium text-gray-700">JEE-2025 Rank Card</label>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
