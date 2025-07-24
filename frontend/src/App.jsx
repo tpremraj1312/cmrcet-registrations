@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, Tab } from '@headlessui/react';
+import { Dialog } from '@headlessui/react';
 import './App.css';
 
 function App() {
@@ -161,8 +161,45 @@ function App() {
       alert('Please fix the errors in the form before previewing');
     }
   };
+
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const closePreview = () => setIsPreviewOpen(false);
+
+  const handleDownloadPDF = async () => {
+    try {
+      const data = new FormData();
+      Object.keys(formData).forEach((key) => {
+        if (key === 'priorities') {
+          data.append(key, JSON.stringify(formData[key]));
+        } else if (formData[key] instanceof File) {
+          data.append(key, formData[key]);
+        } else if (formData[key]) {
+          data.append(key, formData[key]);
+        }
+      });
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/export/pdf`, {
+        method: 'POST',
+        body: data,
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `application_${formData.name || 'form'}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } else {
+        const result = await response.json();
+        alert(`Error generating PDF: ${result.message || 'Unknown server error'}`);
+      }
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      alert(`Error downloading PDF: ${error.message || 'Network error'}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6">
@@ -182,7 +219,7 @@ function App() {
             <img
               src="/cmrcet logo.jpg"
               alt="CMRCET Logo"
-              className="mx-auto object-cover border-2 border-indigo-200 max-w-[150px] sm:max-w-[200px]"
+              className="mx-auto object-cover border-2 border-indigo-200 max-w-[500px] sm:max-w-[300px]"
             />
           </div>
         </header>
@@ -519,79 +556,90 @@ function App() {
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <Dialog.Panel className="w-full max-w-[90vw] sm:max-w-4xl bg-white rounded-2xl p-4 sm:p-6 max-h-[85vh] overflow-y-auto">
               <Dialog.Title className="text-xl sm:text-2xl font-bold text-indigo-800 mb-4">Form Preview</Dialog.Title>
-              <Tab.Group>
-                <Tab.List className="flex flex-wrap gap-2 rounded-xl bg-indigo-100 p-2 mb-4">
-                  {['Personal Info', 'Entrance Exams', '10th Class', '12th Class', 'Preferences', 'Files'].map((tab) => (
-                    <Tab
-                      key={tab}
-                      className={({ selected }) =>
-                        `flex-1 sm:flex-none rounded-lg py-2 px-3 text-sm font-medium text-indigo-800 ${selected ? 'bg-white shadow' : 'hover:bg-indigo-200'}`
-                      }
-                    >
-                      {tab}
-                    </Tab>
-                  ))}
-                </Tab.List>
-                <Tab.Panels>
-                  <Tab.Panel className="space-y-3">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-indigo-800">Personal Information</h3>
+                  <div className="space-y-3 mt-2">
                     <p><strong>Full Name:</strong> {formData.name || 'N/A'}</p>
                     <p><strong>Father's Name:</strong> {formData.fatherName || 'N/A'}</p>
                     <p><strong>Address:</strong> {formData.address || 'N/A'}</p>
                     <p><strong>Mobile Number:</strong> {formData.mobile || 'N/A'}</p>
                     <p><strong>Resident:</strong> {formData.resident || 'N/A'}</p>
-                  </Tab.Panel>
-                  <Tab.Panel className="space-y-3">
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-indigo-800">Entrance Exam Details</h3>
+                  <div className="space-y-3 mt-2">
                     <p><strong>JEE Rank:</strong> {formData.jeeRank || 'N/A'}</p>
                     <p><strong>EAPCET Rank:</strong> {formData.eapcetRank || 'N/A'}</p>
-                  </Tab.Panel>
-                  <Tab.Panel className="space-y-3">
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-indigo-800">10th Class Details</h3>
+                  <div className="space-y-3 mt-2">
                     <p><strong>Board:</strong> {formData.board10th || 'N/A'}</p>
                     <p><strong>Total Marks:</strong> {formData.maxMarks10th || 'N/A'}</p>
                     <p><strong>Marks Obtained:</strong> {formData.marksObtained10th || 'N/A'}</p>
                     <p><strong>GPA:</strong> {formData.gpa10th || 'N/A'}</p>
-                  </Tab.Panel>
-                  <Tab.Panel className="space-y-3">
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-indigo-800">12th Class Details</h3>
+                  <div className="space-y-3 mt-2">
                     <p><strong>Board:</strong> {formData.board12th || 'N/A'}</p>
                     <p><strong>Total Marks:</strong> {formData.maxMarks12th || 'N/A'}</p>
                     <p><strong>Marks Obtained:</strong> {formData.marksObtained12th || 'N/A'}</p>
                     <p><strong>Percentage:</strong> {formData.percentage12th || 'N/A'}</p>
-                  </Tab.Panel>
-                  <Tab.Panel className="space-y-3">
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-indigo-800">Branch Preferences</h3>
+                  <div className="space-y-3 mt-2">
                     {formData.priorities.map((priority, index) => (
                       <p key={index}><strong>Priority {index + 1}:</strong> {priority || 'N/A'}</p>
                     ))}
-                  </Tab.Panel>
-                  <Tab.Panel className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {[
-                      { field: 'photo', label: 'Photo' },
-                      { field: 'memo10th', label: '10th Memo' },
-                      { field: 'memo12th', label: '12th Memo' },
-                      { field: 'eapcetHallTicket', label: 'EAPCET Hall Ticket' },
-                      { field: 'eapcetRankCard', label: 'EAPCET Rank Card' },
-                      { field: 'jeeHallTicket', label: 'JEE Hall Ticket' },
-                      { field: 'jeeRankCard', label: 'JEE Rank Card' },
-                    ].map(({ field, label }) => (
-                      <div key={field}>
-                        <p><strong>{label}:</strong></p>
-                        {formData[field] ? (
-                          formData[field].type === 'application/pdf' ? (
-                            <p className="text-indigo-600">PDF (view after submission)</p>
-                          ) : (
-                            <img
-                              src={URL.createObjectURL(formData[field])}
-                              alt={label}
-                              className="mt-1 max-w-full sm:max-w-xs h-auto rounded-lg shadow-md"
-                            />
-                          )
-                        ) : (
-                          <p className="text-gray-500">Not uploaded</p>
-                        )}
-                      </div>
-                    ))}
-                  </Tab.Panel>
-                </Tab.Panels>
-              </Tab.Group>
-              <div className="mt-6 flex justify-end">
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-indigo-800">Uploaded Files</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+  {[
+    { field: 'photo', label: 'Photo' },
+    { field: 'memo10th', label: '10th Memo' },
+    { field: 'memo12th', label: '12th Memo' },
+    { field: 'eapcetHallTicket', label: 'EAPCET Hall Ticket' },
+    { field: 'eapcetRankCard', label: 'EAPCET Rank Card' },
+    { field: 'jeeHallTicket', label: 'JEE Hall Ticket' },
+    { field: 'jeeRankCard', label: 'JEE Rank Card' },
+  ].map(({ field, label }) => (
+    <div key={field}>
+      <p><strong>{label}:</strong></p>
+      {formData[field] ? (
+        formData[field].type === 'application/pdf' ? (
+          <p className="text-indigo-600">PDF (view after submission)</p>
+        ) : (
+          <img
+            src={URL.createObjectURL(formData[field])}
+            alt={label}
+            className="mt-1 max-w-full sm:max-w-xs h-auto rounded-lg shadow-md"
+          />
+        )
+      ) : (
+        <p className="text-gray-500">Not uploaded</p>
+      )}
+    </div>
+  ))}
+</div>
+
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end space-x-4">
+                <button
+                  onClick={handleDownloadPDF}
+                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Download as PDF
+                </button>
                 <button
                   onClick={closePreview}
                   className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"

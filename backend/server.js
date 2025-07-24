@@ -5,6 +5,7 @@ import multer from 'multer';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { exportToExcel } from './exportToExcel.js';
+import PDFDocument from 'pdfkit';
 import dotenv from 'dotenv';
 
 // Initialize environment variables
@@ -32,6 +33,7 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
     if (allowedTypes.includes(file.mimetype)) {
+      // cborino
       cb(null, true);
     } else {
       cb(new Error('Invalid file type. Only JPEG, PNG, and PDF are allowed.'));
@@ -238,6 +240,150 @@ app.get('/api/export', async (req, res) => {
     res.status(500).json({ message: `Error exporting to Excel: ${error.message}` });
   }
 });
+
+app.post(
+  '/api/export/pdf',
+  upload.fields([
+    { name: 'photo', maxCount: 1 },
+    { name: 'memo10th', maxCount: 1 },
+    { name: 'memo12th', maxCount: 1 },
+    { name: 'eapcetHallTicket', maxCount: 1 },
+    { name: 'eapcetRankCard', maxCount: 1 },
+    { name: 'jeeHallTicket', maxCount: 1 },
+    { name: 'jeeRankCard', maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { priorities, ...otherFields } = req.body;
+      let parsedPriorities = [];
+      if (priorities) {
+        try {
+          parsedPriorities = JSON.parse(priorities);
+          if (!Array.isArray(parsedPriorities)) {
+            throw new Error('Priorities must be an array');
+          }
+        } catch (error) {
+          return res.status(400).json({ message: `Invalid priorities format: ${error.message}` });
+        }
+      }
+
+      const formData = {
+        ...otherFields,
+        priorities: parsedPriorities,
+        photo: req.files['photo'] ? req.files['photo'][0].buffer : null,
+        memo10th: req.files['memo10th'] ? req.files['memo10th'][0].buffer : null,
+        memo12th: req.files['memo12th'] ? req.files['memo12th'][0].buffer : null,
+        eapcetHallTicket: req.files['eapcetHallTicket'] ? req.files['eapcetHallTicket'][0].buffer : null,
+        eapcetRankCard: req.files['eapcetRankCard'] ? req.files['eapcetRankCard'][0].buffer : null,
+        jeeHallTicket: req.files['jeeHallTicket'] ? req.files['jeeHallTicket'][0].buffer : null,
+        jeeRankCard: req.files['jeeRankCard'] ? req.files['jeeRankCard'][0].buffer : null,
+      };
+
+      const doc = new PDFDocument({ margin: 50 });
+      res.setHeader('Content-Disposition', `attachment; filename=application_${formData.name || 'form'}.pdf`);
+      res.setHeader('Content-Type', 'application/pdf');
+      doc.pipe(res);
+
+      // Header
+      doc.fontSize(16).text('CMR College of Engineering & Technology', { align: 'center' });
+      doc.fontSize(12).text('Application for Admission to Category B Seats - B.Tech 2025-26', { align: 'center' });
+      doc.moveDown();
+
+      // Personal Information
+      doc.fontSize(14).text('Personal Information', { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(10);
+      doc.text(`Full Name: ${formData.name || 'N/A'}`);
+      doc.text(`Father's Name: ${formData.fatherName || 'N/A'}`);
+      doc.text(`Address: ${formData.address || 'N/A'}`);
+      doc.text(`Mobile Number: ${formData.mobile || 'N/A'}`);
+      doc.text(`Resident: ${formData.resident || 'N/A'}`);
+      doc.moveDown();
+
+      // Entrance Exam Details
+      doc.fontSize(14).text('Entrance Exam Details', { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(10);
+      doc.text(`JEE Rank: ${formData.jeeRank || 'N/A'}`);
+      doc.text(`EAPCET Rank: ${formData.eapcetRank || 'N/A'}`);
+      doc.moveDown();
+
+      // 10th Class Details
+      doc.fontSize(14).text('10th Class Details', { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(10);
+      doc.text(`Board: ${formData.board10th || 'N/A'}`);
+      doc.text(`Total Marks: ${formData.maxMarks10th || 'N/A'}`);
+      doc.text(`Marks Obtained: ${formData.marksObtained10th || 'N/A'}`);
+      doc.text(`GPA: ${formData.gpa10th || 'N/A'}`);
+      doc.moveDown();
+
+      // 12th Class Details
+      doc.fontSize(14).text('12th Class Details', { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(10);
+      doc.text(`Board: ${formData.board12th || 'N/A'}`);
+      doc.text(`Total Marks: ${formData.maxMarks12th || 'N/A'}`);
+      doc.text(`Marks Obtained: ${formData.marksObtained12th || 'N/A'}`);
+      doc.text(`Percentage: ${formData.percentage12th || 'N/A'}`);
+      doc.moveDown();
+
+      // Branch Preferences
+      doc.fontSize(14).text('Branch Preferences', { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(10);
+      formData.priorities.forEach((priority, index) => {
+        doc.text(`Priority ${index + 1}: ${priority || 'N/A'}`);
+      });
+      doc.moveDown();
+
+      // Uploaded Files
+      doc.fontSize(14).text('Uploaded Files', { underline: true });
+      doc.moveDown(0.5);
+      doc.fontSize(10);
+
+      const fileFields = [
+        { name: 'photo', label: 'Photo' },
+        { name: 'memo10th', label: '10th Memo' },
+        { name: 'memo12th', label: '12th Memo' },
+        { name: 'eapcetHallTicket', label: 'EAPCET Hall Ticket' },
+        { name: 'eapcetRankCard', label: 'EAPCET Rank Card' },
+        { name: 'jeeHallTicket', label: 'JEE Hall Ticket' },
+        { name: 'jeeRankCard', label: 'JEE Rank Card' },
+      ];
+
+      for (const { name, label } of fileFields) {
+        if (formData[name]) {
+          const buffer = formData[name];
+          const isPdf = buffer.toString('hex').startsWith('25504446');
+          doc.text(`${label}:`);
+          if (isPdf) {
+            doc.fontSize(10).text('PDF document attached (view separately)', { indent: 10 });
+          } else {
+            try {
+              doc.image(buffer, {
+                fit: [250, 250],
+                align: 'center',
+                valign: 'center',
+              });
+            } catch (error) {
+              doc.text('Error embedding image', { indent: 10 });
+            }
+          }
+          doc.moveDown();
+        } else {
+          doc.text(`${label}: Not uploaded`);
+          doc.moveDown();
+        }
+      }
+
+      doc.end();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      res.status(500).json({ message: `Error generating PDF: ${error.message}` });
+    }
+  }
+);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
